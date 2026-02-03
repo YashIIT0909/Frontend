@@ -1,3 +1,7 @@
 streamlit
 streamlit-option-menu
 matplotlib
+fastapi
+uvicorn
+pymongo
+python-dotenv
