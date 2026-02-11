@@ -50,7 +50,25 @@ def map_lab_result_read(document: dict[str, Any]) -> dict[str, Any]:
 # Owns model: RecommendationCreate
 # Owns mapper: map_recommendation_read
 # =====================================================================================
+class RecommendationCreate(BaseModel):
+    PatientID: str = Field(min_length=1)
+    SourceRuleID: str = Field(min_length=1)
+    SourcePatternID: str | None = None
+    SuggestionText: str = Field(min_length=1)
+    FollowUpTestName: str | None = None
+    CreatedTimestamp: datetime | None = None
 
+
+def map_recommendation_read(document: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "RecommendationID": str(document["_id"]),
+        "PatientID": document["PatientID"],
+        "SourceRuleID": document["SourceRuleID"],
+        "SourcePatternID": document.get("SourcePatternID"),
+        "SuggestionText": document["SuggestionText"],
+        "FollowUpTestName": document.get("FollowUpTestName"),
+        "CreatedTimestamp": _as_iso(document.get("CreatedTimestamp")),
+    }
 
 def _as_iso(value: Any) -> str | None:
     if isinstance(value, datetime):
