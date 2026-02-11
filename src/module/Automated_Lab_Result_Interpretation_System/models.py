@@ -44,6 +44,52 @@ def map_lab_result_read(document: dict[str, Any]) -> dict[str, Any]:
 # Owns mappers: map_interpretation_rule_read, map_pattern_read
 # =====================================================================================
 
+class InterpretationRuleCreate(BaseModel):
+    RuleName: str = Field(min_length=1)
+    RuleDescription: str | None = None
+    RuleType: RuleTypeEnum
+    LogicCondition: str = Field(min_length=1)
+    ConfidenceScore: float = Field(default=0.5, ge=0, le=1)
+    GeneratedRecommendationIDs: list[str] = Field(default_factory=list)
+    DetectedPatternIDs: list[str] = Field(default_factory=list)
+    CreatedTimestamp: datetime | None = None
+
+
+class PatternCreate(BaseModel):
+    PatternName: str = Field(min_length=1)
+    PatternDescription: str | None = None
+    PatternLogic: str = Field(min_length=1)
+    ProbabilityCalculation: float | None = Field(default=None, ge=0, le=1)
+    GeneratedRecommendationIDs: list[str] = Field(default_factory=list)
+    CreatedTimestamp: datetime | None = None
+
+
+def map_interpretation_rule_read(document: dict[str, Any]) -> dict[str, Any]:
+    confidence = document.get("ConfidenceScore")
+    return {
+        "RuleID": str(document["_id"]),
+        "RuleName": document["RuleName"],
+        "RuleDescription": document.get("RuleDescription"),
+        "RuleType": document["RuleType"],
+        "LogicCondition": document["LogicCondition"],
+        "ConfidenceScore": confidence if isinstance(confidence, (int, float)) else 0.5,
+        "GeneratedRecommendationIDs": document.get("GeneratedRecommendationIDs", []),
+        "DetectedPatternIDs": document.get("DetectedPatternIDs", []),
+        "CreatedTimestamp": _as_iso(document.get("CreatedTimestamp")),
+    }
+
+
+def map_pattern_read(document: dict[str, Any]) -> dict[str, Any]:
+    probability = document.get("ProbabilityCalculation")
+    return {
+        "PatternID": str(document["_id"]),
+        "PatternName": document["PatternName"],
+        "PatternDescription": document.get("PatternDescription"),
+        "PatternLogic": document["PatternLogic"],
+        "ProbabilityCalculation": probability if isinstance(probability, (int, float)) else None,
+        "GeneratedRecommendationIDs": document.get("GeneratedRecommendationIDs", []),
+        "CreatedTimestamp": _as_iso(document.get("CreatedTimestamp")),
+    }
 
 # =====================================================================================
 # MEMBER 3 CODE START
