@@ -10,7 +10,7 @@ from pymongo import ReturnDocument
 
 from database import close_mongo, connect_to_mongo, get_collection, get_lab_results_collection
 from models import LabResultCreate, map_lab_result_read
-
+from models import InterpretationRuleCreate, PatternCreate, map_interpretation_rule_read, map_pattern_read
 from models import RecommendationCreate, map_recommendation_read
 
 app = FastAPI(title="Result Interpretation Engine API")
@@ -37,6 +37,13 @@ def create_lab_result(payload: LabResultCreate) -> dict[str, str]:
     }
 
 
+@app.get("/lab-results/")
+def get_all_results() -> list[dict[str, Any]]:
+    lab_results_collection = get_lab_results_collection()
+    documents = lab_results_collection.find({}).sort("ResultTimestamp", -1).limit(100)
+    return [map_lab_result_read(document) for document in documents]
+
+
 @app.get("/patients/{patient_id}/results")
 def get_patient_results(patient_id: str) -> list[dict[str, Any]]:
     lab_results_collection = get_lab_results_collection()
@@ -51,8 +58,6 @@ def get_patient_results(patient_id: str) -> list[dict[str, Any]]:
 # MEMBER 2 CODE START
 # Owns APIs here: all /rules/* and /patterns/* endpoints
 # =====================================================================================
-
-from models import InterpretationRuleCreate, PatternCreate, map_interpretation_rule_read, map_pattern_read
 
 @app.post("/rules/", status_code=201)
 def create_rule(payload: InterpretationRuleCreate) -> dict[str, str]:
@@ -144,7 +149,7 @@ def get_pattern(pattern_id: str) -> dict[str, Any]:
 # MEMBER 3 CODE START
 # Owns APIs here: /recommendations/* and /evaluate/{patient_id}
 # =====================================================================================
-from models import RecommendationCreate, map_recommendation_read
+
 
 @app.get("/patients/{patient_id}/recommendations")
 def get_patient_recommendations(patient_id: str) -> list[dict[str, Any]]:
@@ -168,6 +173,17 @@ def create_recommendation(payload: RecommendationCreate) -> dict[str, str]:
         "message": "Recommendation created",
         "RecommendationID": str(insert_result.inserted_id),
     }
+
+
+@app.get("/recommendations/")
+def get_all_recommendations() -> list[dict[str, Any]]:
+    recommendations_collection = get_collection("recommendations")
+    documents = (
+        recommendations_collection.find({})
+        .sort("CreatedTimestamp", -1)
+        .limit(100)
+    )
+    return [map_recommendation_read(document) for document in documents]
 
 
 @app.post("/evaluate/{patient_id}")

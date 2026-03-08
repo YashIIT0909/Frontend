@@ -1,7 +1,13 @@
 # dashboards/patient_dashboard.py
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
 import streamlit as st
 from components.sidebar import sidebar
-from components.charts import patient_line_chart, appointment_donut_chart
+
+MODULE44_CODE = "H2"
 
 # All categories and their modules
 CATEGORIES = {
@@ -133,6 +139,7 @@ def patient_dashboard():
     st.session_state.setdefault("view", "main")
     st.session_state.setdefault("selected_category", None)
     st.session_state.setdefault("selected_module", None)
+    st.session_state.setdefault("last_sidebar_selection", "Dashboard")
 
     # Sidebar
     selected = sidebar([
@@ -148,15 +155,19 @@ def patient_dashboard():
         "I - Integrated Capstone Projects"
     ])
 
-    # Handle sidebar selection
-    if selected != "Dashboard" and selected in CATEGORIES:
-        st.session_state.selected_category = selected
-        st.session_state.view = "category"
-        st.session_state.selected_module = None
-    elif selected == "Dashboard":
-        st.session_state.view = "main"
-        st.session_state.selected_category = None
-        st.session_state.selected_module = None
+    # Handle sidebar selection only when user changes it.
+    # Otherwise, reruns triggered by card clicks would reset module navigation.
+    if selected != st.session_state.last_sidebar_selection:
+        st.session_state.last_sidebar_selection = selected
+
+        if selected != "Dashboard" and selected in CATEGORIES:
+            st.session_state.selected_category = selected
+            st.session_state.view = "category"
+            st.session_state.selected_module = None
+        elif selected == "Dashboard":
+            st.session_state.view = "main"
+            st.session_state.selected_category = None
+            st.session_state.selected_module = None
 
     # ROUTER
     if st.session_state.view == "category":
@@ -360,6 +371,10 @@ def show_category_view():
 def show_module_detail():
     code, name, desc, tables, records = st.session_state.selected_module
     cat_key = st.session_state.selected_category
+
+    if code == MODULE44_CODE:
+        show_module44_dashboard(code, name, desc)
+        return
     
     # Breadcrumb
     st.markdown(f"Category {cat_key.split('-')[0].strip()} > {name}")
@@ -367,7 +382,7 @@ def show_module_detail():
     st.markdown(f"*{desc}*")
     
     # Tabs
-    tab = st.radio("", ["🏠 Home", "🔗 ER Diagram", "📋 Tables", "🔍 SQL Query", "⚡ Triggers", "📊 Output"], horizontal=True)
+    tab = st.radio("", ["🏠 Home", "🔗 ER Diagram", "📋 Tables", "📊 Output"], horizontal=True)
     st.divider()
     
     if tab == "🏠 Home":
@@ -398,38 +413,6 @@ def show_module_detail():
             "Status": ["✅ Active", "✅ Active", "✅ Active", "✅ Active", "✅ Active"]
         })
     
-    elif tab == "🔍 SQL Query":
-        st.markdown("### Sample SQL Queries")
-        st.code(f"""
--- Query for {name}
-SELECT p.patient_id, p.name, p.age, i.insurance_type
-FROM patients p
-LEFT JOIN insurance i ON p.id = i.patient_id
-WHERE p.status = 'active'
-ORDER BY p.admission_date DESC
-LIMIT 100;
-""", language="sql")
-        
-        if st.button("▶️ Execute Query"):
-            st.success("Query executed successfully! 1,234 rows returned.")
-    
-    elif tab == "⚡ Triggers":
-        st.markdown("### Database Triggers")
-        st.code(f"""
--- Trigger for {name}
-CREATE TRIGGER after_patient_insert
-AFTER INSERT ON patients
-FOR EACH ROW
-BEGIN
-  INSERT INTO audit_logs (entity_type, entity_id, action, timestamp)
-  VALUES ('patient', NEW.patient_id, 'INSERT', NOW());
-  
-  -- Send notification
-  INSERT INTO notifications (user_id, message)
-  VALUES (NEW.assigned_doctor, CONCAT('New patient registered: ', NEW.name));
-END;
-""", language="sql")
-    
     elif tab == "📊 Output":
         st.markdown("### Module Output")
         st.success("✅ Patient Registered Successfully")
@@ -447,5 +430,48 @@ END;
     
     st.divider()
     if st.button("⬅ Back to Modules"):
+        st.session_state.view = "category"
+        st.rerun()
+
+
+def show_module44_dashboard(code: str, name: str, desc: str):
+    from src.module.Automated_Lab_Result_Interpretation_System.home import render_home
+    from src.module.Automated_Lab_Result_Interpretation_System.er_diagram import render_er_diagram
+    from src.module.Automated_Lab_Result_Interpretation_System.lab_records import render_lab_records
+    from src.module.Automated_Lab_Result_Interpretation_System.rules_admin import render_rules_admin
+    from src.module.Automated_Lab_Result_Interpretation_System.evaluation import render_evaluation
+
+    cat_key = st.session_state.selected_category
+
+    st.markdown(f"Category {cat_key.split('-')[0].strip()} > {name}")
+    st.markdown(f"# {name}")
+    st.markdown(f"*{desc}*")
+
+    tab = st.radio(
+        "",
+        [
+            "🏠 Home",
+            "🔗 ER Diagram",
+            "🔬 Patient Lab Records",
+            "⚙️ Interpretation Rules Engine",
+            "🚀 Evaluation Engine",
+        ],
+        horizontal=True,
+    )
+    st.divider()
+
+    if tab == "🏠 Home":
+        render_home()
+    elif tab == "🔗 ER Diagram":
+        render_er_diagram()
+    elif tab == "🔬 Patient Lab Records":
+        render_lab_records()
+    elif tab == "⚙️ Interpretation Rules Engine":
+        render_rules_admin()
+    elif tab == "🚀 Evaluation Engine":
+        render_evaluation()
+
+    st.divider()
+    if st.button("⬅ Back to Modules", key="back_module44"):
         st.session_state.view = "category"
         st.rerun()
