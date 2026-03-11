@@ -59,6 +59,8 @@ def get_patient_results(patient_id: str) -> list[dict[str, Any]]:
 # Owns APIs here: all /rules/* and /patterns/* endpoints
 # =====================================================================================
 
+from models import InterpretationRuleCreate, PatternCreate, map_interpretation_rule_read, map_pattern_read
+
 @app.post("/rules/", status_code=201)
 def create_rule(payload: InterpretationRuleCreate) -> dict[str, str]:
     rules_collection = get_collection("interpretation_rules")
