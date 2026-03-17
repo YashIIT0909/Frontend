@@ -435,11 +435,11 @@ def show_module_detail():
 
 
 def show_module44_dashboard(code: str, name: str, desc: str):
-    from src.module.Automated_Lab_Result_Interpretation_System.home import render_home
-    from src.module.Automated_Lab_Result_Interpretation_System.er_diagram import render_er_diagram
-    from src.module.Automated_Lab_Result_Interpretation_System.lab_records import render_lab_records
-    from src.module.Automated_Lab_Result_Interpretation_System.rules_admin import render_rules_admin
-    from src.module.Automated_Lab_Result_Interpretation_System.evaluation import render_evaluation
+    from src.module.Automated_Lab_Result_Interpretation_System.pages.home import render_home
+    from src.module.Automated_Lab_Result_Interpretation_System.pages.er_diagram import render_er_diagram
+    from src.module.Automated_Lab_Result_Interpretation_System.pages.lab_records import render_lab_records
+    from src.module.Automated_Lab_Result_Interpretation_System.pages.rules_admin import render_rules_admin
+    from src.module.Automated_Lab_Result_Interpretation_System.pages.evaluation import render_evaluation
 
     cat_key = st.session_state.selected_category
 
